@@ -1,0 +1,57 @@
+{
+  "name": "simplified-multi-sig-wallet-solidity",
+  "version": "1.0.0",
+  "description": "🏦 企业级多签名钱包智能合约系统，实现安全的多方资金管理和企业级审批工作流程",
+  "main": "index.js",
+  "scripts": {
+    "compile": "npx hardhat compile",
+    "test": "npx hardhat test",
+    "test:coverage": "npx hardhat coverage",
+    "test:gas": "REPORT_GAS=true npx hardhat test",
+    "clean": "npx hardhat clean",
+    "node": "npx hardhat node",
+    "deploy:local": "npx hardhat deploy --network localhost",
+    "deploy:sepolia": "npx hardhat deploy --network sepolia",
+    "deploy:mumbai": "npx hardhat deploy --network mumbai",
+    "deploy:mainnet": "npx hardhat deploy --network mainnet",
+    "deploy:polygon": "npx hardhat deploy --network polygon",
+    "verify:sepolia": "npx hardhat verify --network sepolia",
+    "verify:mumbai": "npx hardhat verify --network mumbai",
+    "verify:mainnet": "npx hardhat verify --network mainnet",
+    "verify:polygon": "npx hardhat verify --network polygon",
+    "lint": "npx solhint 'contracts/**/*.sol'",
+    "lint:fix": "npx solhint 'contracts/**/*.sol' --fix",
+    "format": "npx prettier --write 'contracts/**/*.sol'",
+    "size": "npx hardhat size-contracts",
+    "analyze": "slither .",
+    "flatten": "npx hardhat flatten",
+    "docgen": "npx hardhat docgen"
+  },
+  "keywords": [
+    "solidity",
+    "ethereum",
+    "smart-contracts",
+    "multisig",
+    "wallet",
+    "defi",
+    "hardhat",
+    "typescript"
+  ],
+  "author": "samxie52",
+  "license": "ISC",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^6.1.0",
+    "@nomicfoundation/hardhat-verify": "^2.1.1",
+    "@types/node": "^24.2.1",
+    "ethers": "^6.15.0",
+    "hardhat": "^2.26.3",
+    "hardhat-deploy": "^1.0.4",
+    "hardhat-gas-reporter": "^2.3.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.4.0",
+    "dotenv": "^17.2.1"
+  }
+}
