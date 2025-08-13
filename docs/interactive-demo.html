@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MultiSig Wallet - 实时交互演示</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <script>
+        // 备用ethers库加载
+        if (typeof ethers === 'undefined') {
+            console.log('主CDN失败，尝试备用CDN...');
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js';
+            script.onerror = function() {
+                console.error('所有CDN都失败，请检查网络连接');
+                alert('无法加载ethers库，请检查网络连接或使用本地环境');
+            };
+            document.head.appendChild(script);
+        }
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            padding: 40px 0;
+        }
+
+        .header h1 {
+            font-size: 3.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .status-bar {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+            color: white;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .status-item {
+            text-align: center;
+        }
+
+        .status-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            display: block;
+        }
+
+        .status-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .demo-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .demo-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .demo-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .output {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            border-left: 4px solid #667eea;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .success {
+            color: #28a745;
+        }
+
+        .error {
+            color: #dc3545;
+        }
+
+        .info {
+            color: #17a2b8;
+        }
+
+        .warning {
+            color: #ffc107;
+        }
+
+        .transactions-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .transaction-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #667eea;
+        }
+
+        .transaction-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .transaction-id {
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .transaction-status {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-executed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-ready {
+            background: #cce7ff;
+            color: #004085;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        @media (max-width: 768px) {
+            .demo-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 页面头部 -->
+        <div class="header">
+            <h1>🔐 MultiSig Wallet</h1>
+            <div style="font-size: 1.3em; opacity: 0.9;">实时交互演示</div>
+            <div style="font-size: 1.1em; opacity: 0.8; margin-top: 10px;">
+                与本地Hardhat节点实时交互
+            </div>
+        </div>
+
+        <!-- 账户选择器 -->
+        <div class="status-bar">
+            <div style="margin-bottom: 20px;">
+                <h3 style="color: white; margin-bottom: 15px;">👤 账户选择 (多签名演示)</h3>
+                <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                    <label style="color: white; font-weight: bold;">当前账户:</label>
+                    <select id="accountSelector" onchange="switchAccount()" style="padding: 8px 12px; border-radius: 6px; border: none; background: white; min-width: 200px;">
+                        <option value="">连接中...</option>
+                    </select>
+                    <div id="currentAccountInfo" style="color: #ccc; font-size: 0.9em;">
+                        余额: - ETH | 角色: -
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 状态栏 -->
+        <div class="status-bar">
+            <div class="status-grid">
+                <div class="status-item">
+                    <span class="status-value" id="contractAddress">连接中...</span>
+                    <div class="status-label">合约地址</div>
+                </div>
+                <div class="status-item">
+                    <span class="status-value" id="ownersCount">-</span>
+                    <div class="status-label">所有者数量</div>
+                </div>
+                <div class="status-item">
+                    <span class="status-value" id="requiredConfirmations">-</span>
+                    <div class="status-label">所需确认数</div>
+                </div>
+                <div class="status-item">
+                    <span class="status-value" id="transactionCount">-</span>
+                    <div class="status-label">交易总数</div>
+                </div>
+                <div class="status-item">
+                    <span class="status-value" id="contractBalance">-</span>
+                    <div class="status-label">合约余额 (ETH)</div>
+                </div>
+                <div class="status-item">
+                    <span class="status-value" id="networkStatus">-</span>
+                    <div class="status-label">网络状态</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 演示区域 -->
+        <div class="demo-grid">
+            <!-- 交易提交 -->
+            <div class="demo-section">
+                <h2>💰 提交交易</h2>
+                <div class="form-group">
+                    <label>目标地址:</label>
+                    <input type="text" id="submitTo" placeholder="0x..." value="0x70997970C51812dc3A010C7d01b50e0d17dc79C8">
+                </div>
+                <div class="form-group">
+                    <label>金额 (ETH):</label>
+                    <input type="number" id="submitValue" placeholder="0.1" step="0.01" value="0.1">
+                </div>
+                <div class="form-group">
+                    <label>数据 (可选):</label>
+                    <input type="text" id="submitData" placeholder="0x" value="0x">
+                </div>
+                <button class="btn" onclick="submitTransaction()">提交交易</button>
+                <div class="output" id="submitOutput">等待操作...</div>
+            </div>
+
+            <!-- 交易确认 -->
+            <div class="demo-section">
+                <h2>✅ 确认交易</h2>
+                <div class="form-group">
+                    <label>交易ID:</label>
+                    <input type="number" id="confirmTxId" placeholder="0" value="0">
+                </div>
+                <button class="btn" onclick="confirmTransaction()">确认交易</button>
+                <button class="btn" onclick="executeTransaction()">执行交易</button>
+                <button class="btn" onclick="revokeConfirmation()">撤销确认</button>
+                <div class="output" id="confirmOutput">等待操作...</div>
+            </div>
+
+            <!-- 批量操作 -->
+            <div class="demo-section">
+                <h2>⚡ 批量操作</h2>
+                <div class="form-group">
+                    <label>批量类型:</label>
+                    <select id="batchType">
+                        <option value="submit">批量提交</option>
+                        <option value="confirm">批量确认</option>
+                        <option value="revoke">批量撤销</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>交易ID列表 (逗号分隔):</label>
+                    <input type="text" id="batchIds" placeholder="0,1,2" value="0,1,2">
+                </div>
+                <button class="btn" onclick="performBatchOperation()">执行批量操作</button>
+                <div class="output" id="batchOutput">等待操作...</div>
+            </div>
+
+            <!-- 合约状态 -->
+            <div class="demo-section">
+                <h2>📊 合约状态</h2>
+                <button class="btn" onclick="refreshStatus()">刷新状态</button>
+                <button class="btn" onclick="getOwners()">获取所有者</button>
+                <button class="btn" onclick="checkAllTransactions()">检查所有交易</button>
+                <button class="btn" onclick="fundContract()">向合约转账 1 ETH</button>
+                <button class="btn" onclick="pauseContract()">暂停合约</button>
+                <div class="output" id="statusOutput">点击按钮查看状态...</div>
+            </div>
+
+            <!-- 交易列表 -->
+            <div class="demo-section full-width">
+                <h2>📋 交易列表</h2>
+                <button class="btn" onclick="loadTransactions()">加载交易</button>
+                <button class="btn" onclick="clearTransactions()">清空列表</button>
+                <div class="transactions-list" id="transactionsList">
+                    <div style="text-align: center; color: #666; padding: 20px;">
+                        点击"加载交易"查看所有交易
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 合约配置
+        const CONTRACT_ADDRESS = '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512';
+        const RPC_URL = 'http://127.0.0.1:8545';
+        
+        // 合约ABI (简化版)
+        const CONTRACT_ABI = [
+            "function submitTransaction(address to, uint256 value, bytes calldata data) external returns (uint256)",
+            "function confirmTransaction(uint256 transactionId) external",
+            "function executeTransaction(uint256 transactionId) external",
+            "function revokeConfirmation(uint256 transactionId) external",
+            "function batchSubmit(address[] calldata destinations, uint256[] calldata values, bytes[] calldata dataArray) external",
+            "function batchConfirm(uint256[] calldata transactionIds) external",
+            "function batchRevoke(uint256[] calldata transactionIds) external",
+            "function getOwners() external view returns (address[] memory)",
+            "function required() external view returns (uint256)",
+            "function getTransactionCount() external view returns (uint256)",
+            "function isConfirmed(uint256 transactionId) external view returns (bool)",
+            "function getConfirmationCount(uint256 transactionId) external view returns (uint256)",
+            "function getTransaction(uint256 transactionId) external view returns (address, uint256, bytes memory, bool)",
+            "function paused() external view returns (bool)",
+            "function emergencyPause() external",
+            "function emergencyUnpause() external",
+            "event TransactionSubmitted(uint256 indexed transactionId, address indexed to, uint256 value, bytes data, address indexed submitter)",
+            "event TransactionConfirmed(uint256 indexed transactionId, address indexed owner)",
+            "event TransactionExecuted(uint256 indexed transactionId)"
+        ];
+
+        let provider;
+        let signer;
+        let contract;
+        let accounts = [];
+        let contractOwners = [];
+        let currentAccountIndex = 0;
+
+        // 初始化
+        async function init() {
+            try {
+                log('正在连接到本地Hardhat节点...', 'info');
+                
+                // 连接到本地节点
+                provider = new ethers.providers.JsonRpcProvider(RPC_URL);
+                
+                // 获取账户
+                accounts = await provider.listAccounts();
+                signer = provider.getSigner(0);
+                
+                // 连接合约
+                contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+                
+                // 获取合约所有者
+                contractOwners = await contract.getOwners();
+                
+                // 初始化账户选择器
+                await initAccountSelector();
+                
+                // 更新状态
+                await refreshStatus();
+                
+                // 设置事件监听
+                setupEventListeners();
+                
+                log('✅ 成功连接到合约！', 'success');
+                document.getElementById('networkStatus').textContent = '已连接';
+                
+            } catch (error) {
+                log(`❌ 连接失败: ${error.message}`, 'error');
+                document.getElementById('networkStatus').textContent = '连接失败';
+            }
+        }
+
+        // 设置事件监听
+        function setupEventListeners() {
+            try {
+                // 清理所有现有监听器
+                contract.removeAllListeners();
+                
+                contract.on("TransactionSubmitted", (transactionId, to, value, data, submitter) => {
+                    const currentAccount = accounts[currentAccountIndex];
+                    const isCurrentUser = submitter.toLowerCase() === currentAccount.toLowerCase();
+                    log(`🔄 新交易提交: ID=${transactionId}, To=${to.slice(0, 10)}..., Value=${ethers.utils.formatEther(value)} ETH`, 'info');
+                    if (isCurrentUser) {
+                        log(`   👤 由当前账户提交`, 'info');
+                    }
+                    refreshStatus();
+                });
+
+                contract.on("TransactionConfirmed", (transactionId, owner) => {
+                    const currentAccount = accounts[currentAccountIndex];
+                    const isCurrentUser = owner.toLowerCase() === currentAccount.toLowerCase();
+                    log(`✅ 交易确认: ID=${transactionId}, Owner=${owner.slice(0, 10)}...`, 'success');
+                    if (isCurrentUser) {
+                        log(`   👤 由当前账户确认`, 'success');
+                    }
+                    refreshStatus();
+                });
+
+                contract.on("TransactionExecuted", (transactionId) => {
+                    log(`🚀 交易执行: ID=${transactionId}`, 'success');
+                    refreshStatus();
+                });
+
+                contract.on("ConfirmationRevoked", (transactionId, owner) => {
+                    const currentAccount = accounts[currentAccountIndex];
+                    const isCurrentUser = owner.toLowerCase() === currentAccount.toLowerCase();
+                    log(`🔄 确认撤销: ID=${transactionId}, Owner=${owner.slice(0, 10)}...`, 'warning');
+                    if (isCurrentUser) {
+                        log(`   👤 由当前账户撤销`, 'warning');
+                    }
+                    refreshStatus();
+                });
+
+                log(`📡 事件监听器已设置 (账户: ${accounts[currentAccountIndex].slice(0, 10)}...)`, 'info');
+                
+            } catch (error) {
+                log(`⚠️ 设置事件监听器失败: ${error.message}`, 'warning');
+            }
+        }
+
+        // 刷新状态
+        async function refreshStatus() {
+            try {
+                const owners = await contract.getOwners();
+                const required = await contract.required();
+                const txCount = await contract.getTransactionCount();
+                const balance = await provider.getBalance(CONTRACT_ADDRESS);
+                
+                document.getElementById('contractAddress').textContent = CONTRACT_ADDRESS.slice(0, 10) + '...';
+                document.getElementById('ownersCount').textContent = owners.length;
+                document.getElementById('requiredConfirmations').textContent = required.toString();
+                document.getElementById('transactionCount').textContent = txCount.toString();
+                document.getElementById('contractBalance').textContent = ethers.utils.formatEther(balance);
+                
+            } catch (error) {
+                log(`刷新状态失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 提交交易
+        async function submitTransaction() {
+            const to = document.getElementById('submitTo').value;
+            const value = document.getElementById('submitValue').value;
+            const data = document.getElementById('submitData').value || '0x';
+            
+            if (!to || !value) {
+                log('请填写目标地址和金额', 'warning');
+                return;
+            }
+
+            try {
+                // 检查合约余额
+                const contractBalance = await provider.getBalance(CONTRACT_ADDRESS);
+                const valueWei = ethers.utils.parseEther(value);
+                
+                log(`💰 合约当前余额: ${ethers.utils.formatEther(contractBalance)} ETH`, 'info');
+                log(`💸 计划转账金额: ${value} ETH`, 'info');
+                
+                if (contractBalance.lt(valueWei)) {
+                    log(`⚠️ 警告: 合约余额不足！`, 'warning');
+                    log(`   当前余额: ${ethers.utils.formatEther(contractBalance)} ETH`, 'warning');
+                    log(`   需要金额: ${value} ETH`, 'warning');
+                    log(`   缺少金额: ${ethers.utils.formatEther(valueWei.sub(contractBalance))} ETH`, 'warning');
+                    log(`💡 建议: 先点击"向合约转账"增加余额`, 'info');
+                }
+                
+                log('正在提交交易...', 'info');
+                const tx = await contract.submitTransaction(
+                    to,
+                    ethers.utils.parseEther(value),
+                    data
+                );
+                
+                log(`交易已提交，等待确认... Hash: ${tx.hash}`, 'info');
+                const receipt = await tx.wait();
+                
+                // 解析事件获取交易ID
+                const event = receipt.events?.find(e => e.event === 'TransactionSubmitted');
+                if (event && event.args) {
+                    const transactionId = event.args.transactionId.toString();
+                    log(`✅ 交易提交成功！交易ID: ${transactionId}`, 'success');
+                    document.getElementById('confirmTxId').value = transactionId;
+                } else {
+                    // 如果事件解析失败，尝试从交易计数推断ID
+                    const txCount = await contract.getTransactionCount();
+                    const transactionId = (txCount - 1).toString();
+                    log(`✅ 交易提交成功！推断交易ID: ${transactionId}`, 'success');
+                    document.getElementById('confirmTxId').value = transactionId;
+                }
+                
+            } catch (error) {
+                log(`❌ 提交失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 确认交易
+        async function confirmTransaction() {
+            const txId = document.getElementById('confirmTxId').value;
+            
+            if (!txId) {
+                log('请输入交易ID', 'warning');
+                return;
+            }
+
+            try {
+                // 首先检查交易状态
+                log(`正在检查交易 ${txId} 状态...`, 'info');
+                const txCount = await contract.getTransactionCount();
+                
+                if (txId >= txCount) {
+                    log(`❌ 交易ID ${txId} 不存在 (总交易数: ${txCount})`, 'error');
+                    return;
+                }
+
+                const [to, value, data, executed] = await contract.getTransaction(txId);
+                const confirmations = await contract.getConfirmationCount(txId);
+                const required = await contract.required();
+                
+                if (executed) {
+                    log(`⚠️ 交易 ${txId} 已经执行，无需再确认`, 'warning');
+                    return;
+                }
+
+                log(`交易 ${txId} 当前确认数: ${confirmations}/${required}`, 'info');
+                
+                // 检查当前用户是否已经确认过
+                const currentAccount = await signer.getAddress();
+                
+                // 重要：检查确认后是否会触发自动执行
+                if (confirmations + 1 >= required) {
+                    log(`⚠️ 警告: 此次确认将达到执行阈值 (${confirmations + 1}/${required})`, 'warning');
+                    log(`🔍 检查交易是否可以成功执行...`, 'info');
+                    
+                    // 检查合约余额是否足够
+                    const contractBalance = await provider.getBalance(CONTRACT_ADDRESS);
+                    log(`💰 合约余额: ${ethers.utils.formatEther(contractBalance)} ETH`, 'info');
+                    log(`💸 交易金额: ${ethers.utils.formatEther(value)} ETH`, 'info');
+                    log(`📍 目标地址: ${to}`, 'info');
+                    
+                    if (contractBalance.lt(value)) {
+                        log(`❌ 合约余额不足！无法执行交易`, 'error');
+                        log(`   缺少: ${ethers.utils.formatEther(value.sub(contractBalance))} ETH`, 'error');
+                        log(`💡 建议: 先向合约转账，或提交较小金额的交易`, 'info');
+                        return;
+                    }
+                    
+                    log(`✅ 余额检查通过，交易将在确认后自动执行`, 'success');
+                }
+                
+                // 尝试确认交易
+                log(`正在确认交易 ${txId}...`, 'info');
+                const tx = await contract.confirmTransaction(txId);
+                
+                log(`确认交易已提交... Hash: ${tx.hash}`, 'info');
+                await tx.wait();
+                
+                log(`✅ 交易 ${txId} 确认成功！`, 'success');
+                
+                // 刷新状态
+                await refreshStatus();
+                
+            } catch (error) {
+                if (error.message.includes('transaction already confirmed')) {
+                    const currentAccount = await signer.getAddress();
+                    log(`⚠️ 账户 ${currentAccount.slice(0, 10)}... 已经确认过交易 ${txId}`, 'warning');
+                    log(`💡 这是正常的安全机制，防止重复确认`, 'info');
+                    log(`🔄 您可以切换到其他所有者账户进行确认`, 'info');
+                } else if (error.message.includes('not an owner')) {
+                    log(`❌ 只有合约所有者才能确认交易`, 'error');
+                    log(`👑 请切换到所有者账户 (带有👑标识)`, 'info');
+                } else {
+                    log(`❌ 确认失败: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        // 执行交易
+        async function executeTransaction() {
+            const txId = document.getElementById('confirmTxId').value;
+            
+            if (!txId) {
+                log('请输入交易ID', 'warning');
+                return;
+            }
+
+            try {
+                // 检查交易状态
+                log(`正在检查交易 ${txId} 执行条件...`, 'info');
+                const txCount = await contract.getTransactionCount();
+                
+                if (txId >= txCount) {
+                    log(`❌ 交易ID ${txId} 不存在 (总交易数: ${txCount})`, 'error');
+                    return;
+                }
+
+                const [to, value, data, executed] = await contract.getTransaction(txId);
+                const confirmations = await contract.getConfirmationCount(txId);
+                const required = await contract.required();
+                
+                if (executed) {
+                    log(`⚠️ 交易 ${txId} 已经执行过了`, 'warning');
+                    return;
+                }
+
+                if (confirmations < required) {
+                    log(`❌ 交易 ${txId} 确认数不足: ${confirmations}/${required}`, 'error');
+                    log(`💡 需要至少 ${required} 个确认才能执行`, 'info');
+                    return;
+                }
+
+                log(`✅ 交易 ${txId} 满足执行条件 (${confirmations}/${required})`, 'success');
+                log(`正在执行交易 ${txId}...`, 'info');
+                
+                const tx = await contract.executeTransaction(txId);
+                
+                log(`执行交易已提交... Hash: ${tx.hash}`, 'info');
+                await tx.wait();
+                
+                log(`✅ 交易 ${txId} 执行成功！`, 'success');
+                log(`💰 已转账 ${ethers.utils.formatEther(value)} ETH 到 ${to}`, 'info');
+                
+                // 刷新状态
+                await refreshStatus();
+                
+            } catch (error) {
+                if (error.message.includes('transaction already executed')) {
+                    log(`⚠️ 交易 ${txId} 已经执行过了`, 'warning');
+                } else if (error.message.includes('not enough confirmations')) {
+                    log(`❌ 交易 ${txId} 确认数不足，无法执行`, 'error');
+                } else if (error.message.includes('transaction execution failed')) {
+                    log(`❌ 交易执行失败 - 可能原因:`, 'error');
+                    log(`   • 合约余额不足`, 'warning');
+                    log(`   • 目标地址无效`, 'warning');
+                    log(`   • Gas限制不足`, 'warning');
+                    
+                    // 检查合约余额
+                    try {
+                        const contractBalance = await provider.getBalance(CONTRACT_ADDRESS);
+                        const [to, value] = await contract.getTransaction(txId);
+                        log(`   合约余额: ${ethers.utils.formatEther(contractBalance)} ETH`, 'info');
+                        log(`   需要转账: ${ethers.utils.formatEther(value)} ETH`, 'info');
+                        
+                        if (contractBalance.lt(value)) {
+                            log(`💡 建议: 先向合约转账增加余额`, 'info');
+                        }
+                    } catch (e) {
+                        log(`   无法检查余额详情`, 'warning');
+                    }
+                } else {
+                    log(`❌ 执行失败: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        // 撤销确认
+        async function revokeConfirmation() {
+            const txId = document.getElementById('confirmTxId').value;
+            
+            if (!txId) {
+                log('请输入交易ID', 'warning');
+                return;
+            }
+
+            try {
+                // 检查交易状态和当前用户确认状态
+                log(`正在检查交易 ${txId} 确认状态...`, 'info');
+                const txCount = await contract.getTransactionCount();
+                
+                if (txId >= txCount) {
+                    log(`❌ 交易ID ${txId} 不存在 (总交易数: ${txCount})`, 'error');
+                    return;
+                }
+
+                const [to, value, data, executed] = await contract.getTransaction(txId);
+                const confirmations = await contract.getConfirmationCount(txId);
+                const currentAccount = await signer.getAddress();
+                
+                if (executed) {
+                    log(`⚠️ 交易 ${txId} 已经执行，无法撤销确认`, 'warning');
+                    return;
+                }
+
+                // 检查当前用户是否已确认此交易
+                let hasConfirmed = false;
+                try {
+                    // 这里我们需要检查当前用户是否确认了这个交易
+                    // 由于合约可能没有直接的方法，我们先尝试调用撤销
+                    log(`当前账户: ${currentAccount.slice(0, 10)}...`, 'info');
+                    log(`交易 ${txId} 当前确认数: ${confirmations}`, 'info');
+                    
+                    log(`正在撤销交易 ${txId} 的确认...`, 'info');
+                    const tx = await contract.revokeConfirmation(txId);
+                    
+                    log(`撤销确认已提交... Hash: ${tx.hash}`, 'info');
+                    await tx.wait();
+                    
+                    log(`✅ 交易 ${txId} 确认撤销成功！`, 'success');
+                    
+                    // 刷新状态
+                    await refreshStatus();
+                    
+                } catch (innerError) {
+                    if (innerError.message.includes('transaction not confirmed')) {
+                        log(`⚠️ 当前账户 ${currentAccount.slice(0, 10)}... 尚未确认交易 ${txId}`, 'warning');
+                        log(`💡 只能撤销您已经确认过的交易`, 'info');
+                        log(`📋 建议: 先确认交易，然后再尝试撤销`, 'info');
+                    } else {
+                        throw innerError; // 重新抛出其他错误
+                    }
+                }
+                
+            } catch (error) {
+                if (error.message.includes('transaction not confirmed')) {
+                    // 这个错误已经在内部处理了
+                    return;
+                } else if (error.message.includes('not an owner')) {
+                    log(`❌ 只有合约所有者才能撤销确认`, 'error');
+                } else {
+                    log(`❌ 撤销失败: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        // 批量操作
+        async function performBatchOperation() {
+            const batchType = document.getElementById('batchType').value;
+            const idsStr = document.getElementById('batchIds').value;
+            
+            if (!idsStr) {
+                log('请输入交易ID列表', 'warning');
+                return;
+            }
+
+            const ids = idsStr.split(',').map(id => parseInt(id.trim()));
+
+            try {
+                log(`正在执行批量${batchType}操作...`, 'info');
+                let tx;
+                
+                if (batchType === 'submit') {
+                    // 批量提交示例
+                    const destinations = ids.map(() => '0x70997970C51812dc3A010C7d01b50e0d17dc79C8');
+                    const values = ids.map(() => ethers.utils.parseEther('0.01'));
+                    const dataArray = ids.map(() => '0x');
+                    
+                    tx = await contract.batchSubmit(destinations, values, dataArray);
+                } else if (batchType === 'confirm') {
+                    tx = await contract.batchConfirm(ids);
+                } else if (batchType === 'revoke') {
+                    tx = await contract.batchRevoke(ids);
+                }
+                
+                log(`批量操作已提交... Hash: ${tx.hash}`, 'info');
+                await tx.wait();
+                
+                log(`✅ 批量${batchType}操作成功！`, 'success');
+                
+            } catch (error) {
+                log(`❌ 批量操作失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 获取所有者
+        async function getOwners() {
+            try {
+                const owners = await contract.getOwners();
+                log('📋 所有者列表:', 'info');
+                owners.forEach((owner, index) => {
+                    const isCurrentUser = owner.toLowerCase() === accounts[currentAccountIndex].toLowerCase();
+                    log(`  ${index + 1}. ${owner} ${isCurrentUser ? '👤 (当前账户)' : ''}`, 'info');
+                });
+                
+            } catch (error) {
+                log(`❌ 获取所有者失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 检查所有交易状态
+        async function checkAllTransactions() {
+            try {
+                log('🔍 检查所有交易状态...', 'info');
+                const txCount = await contract.getTransactionCount();
+                const required = await contract.required();
+                const contractBalance = await provider.getBalance(CONTRACT_ADDRESS);
+                
+                log(`📊 交易总数: ${txCount}`, 'info');
+                log(`💰 合约余额: ${ethers.utils.formatEther(contractBalance)} ETH`, 'info');
+                log(`🎯 所需确认数: ${required}`, 'info');
+                log('─'.repeat(50), 'info');
+                
+                if (txCount == 0) {
+                    log('📝 暂无交易', 'info');
+                    return;
+                }
+                
+                for (let i = 0; i < txCount; i++) {
+                    const [to, value, data, executed] = await contract.getTransaction(i);
+                    const confirmations = await contract.getConfirmationCount(i);
+                    const valueEth = ethers.utils.formatEther(value);
+                    
+                    log(`📋 交易 #${i}:`, 'info');
+                    log(`   目标: ${to.slice(0, 10)}...`, 'info');
+                    log(`   金额: ${valueEth} ETH`, 'info');
+                    log(`   确认: ${confirmations}/${required}`, 'info');
+                    log(`   状态: ${executed ? '✅ 已执行' : confirmations >= required ? '🟡 待执行' : '🔄 待确认'}`, 'info');
+                    
+                    // 检查余额是否足够执行
+                    if (!executed && confirmations >= required) {
+                        if (contractBalance.lt(value)) {
+                            log(`   ⚠️ 余额不足，无法执行 (缺少 ${ethers.utils.formatEther(value.sub(contractBalance))} ETH)`, 'warning');
+                        } else {
+                            log(`   ✅ 可以执行`, 'success');
+                        }
+                    }
+                    
+                    log('', 'info'); // 空行分隔
+                }
+                
+            } catch (error) {
+                log(`❌ 检查交易失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 向合约转账
+        async function fundContract() {
+            try {
+                log('正在向合约转账 1 ETH...', 'info');
+                const tx = await signer.sendTransaction({
+                    to: CONTRACT_ADDRESS,
+                    value: ethers.utils.parseEther('1.0')
+                });
+                
+                log(`转账已提交... Hash: ${tx.hash}`, 'info');
+                await tx.wait();
+                
+                log('✅ 转账成功！', 'success');
+                await refreshStatus();
+                
+            } catch (error) {
+                log(`❌ 转账失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 暂停合约
+        async function pauseContract() {
+            try {
+                const paused = await contract.paused();
+                
+                if (paused) {
+                    log('正在恢复合约...', 'info');
+                    const tx = await contract.emergencyUnpause();
+                    await tx.wait();
+                    log('✅ 合约已恢复！', 'success');
+                } else {
+                    log('正在暂停合约...', 'info');
+                    const tx = await contract.emergencyPause();
+                    await tx.wait();
+                    log('✅ 合约已暂停！', 'success');
+                }
+                
+                await refreshStatus();
+                
+            } catch (error) {
+                log(`❌ 暂停/恢复失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 加载交易列表
+        async function loadTransactions() {
+            try {
+                log('正在加载交易列表...', 'info');
+                const txCount = await contract.getTransactionCount();
+                const transactionsList = document.getElementById('transactionsList');
+                
+                transactionsList.innerHTML = '';
+                
+                for (let i = 0; i < txCount; i++) {
+                    const [to, value, data, executed] = await contract.getTransaction(i);
+                    const confirmations = await contract.getConfirmationCount(i);
+                    const required = await contract.required();
+                    
+                    const txItem = document.createElement('div');
+                    txItem.className = 'transaction-item';
+                    
+                    let status = 'pending';
+                    let statusText = '等待确认';
+                    
+                    if (executed) {
+                        status = 'executed';
+                        statusText = '已执行';
+                    } else if (confirmations >= required) {
+                        status = 'ready';
+                        statusText = '可执行';
+                    }
+                    
+                    txItem.innerHTML = `
+                        <div class="transaction-header">
+                            <span class="transaction-id">交易 #${i}</span>
+                            <span class="transaction-status status-${status}">${statusText}</span>
+                        </div>
+                        <div><strong>目标:</strong> ${to}</div>
+                        <div><strong>金额:</strong> ${ethers.utils.formatEther(value)} ETH</div>
+                        <div><strong>确认数:</strong> ${confirmations}/${required}</div>
+                        <div><strong>数据:</strong> ${data.length > 10 ? data.slice(0, 10) + '...' : data}</div>
+                    `;
+                    
+                    transactionsList.appendChild(txItem);
+                }
+                
+                log(`✅ 加载了 ${txCount} 个交易`, 'success');
+                
+            } catch (error) {
+                log(`❌ 加载交易失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 清空交易列表
+        function clearTransactions() {
+            document.getElementById('transactionsList').innerHTML = `
+                <div style="text-align: center; color: #666; padding: 20px;">
+                    点击"加载交易"查看所有交易
+                </div>
+            `;
+        }
+
+        // 日志函数
+        function log(message, type = 'info') {
+            const outputs = ['submitOutput', 'confirmOutput', 'batchOutput', 'statusOutput'];
+            const timestamp = new Date().toLocaleTimeString();
+            const logMessage = `[${timestamp}] ${message}`;
+            
+            // 更新所有输出区域的最后一个
+            outputs.forEach(outputId => {
+                const output = document.getElementById(outputId);
+                if (output && output.textContent !== '等待操作...' && output.textContent !== '点击按钮查看状态...') {
+                    const lines = output.innerHTML.split('<br>');
+                    if (lines.length > 10) {
+                        lines.shift(); // 移除最旧的日志
+                    }
+                    lines.push(`<span class="${type}">${logMessage}</span>`);
+                    output.innerHTML = lines.join('<br>');
+                    output.scrollTop = output.scrollHeight;
+                }
+            });
+            
+            // 更新当前活动的输出区域
+            const activeOutput = document.querySelector('.output:hover') || document.getElementById('statusOutput');
+            if (activeOutput) {
+                const lines = activeOutput.innerHTML.split('<br>');
+                if (lines.length > 10) {
+                    lines.shift();
+                }
+                lines.push(`<span class="${type}">${logMessage}</span>`);
+                activeOutput.innerHTML = lines.join('<br>');
+                activeOutput.scrollTop = activeOutput.scrollHeight;
+            }
+            
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        // 初始化账户选择器
+        async function initAccountSelector() {
+            const selector = document.getElementById('accountSelector');
+            selector.innerHTML = '';
+            
+            for (let i = 0; i < accounts.length; i++) {
+                const account = accounts[i];
+                const isOwner = contractOwners.includes(account);
+                const balance = await provider.getBalance(account);
+                const balanceEth = ethers.utils.formatEther(balance);
+                
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = `${account.slice(0, 6)}...${account.slice(-4)} (${balanceEth.slice(0, 6)} ETH) ${isOwner ? '👑 所有者' : '👤 普通账户'}`;
+                
+                if (i === currentAccountIndex) {
+                    option.selected = true;
+                }
+                
+                selector.appendChild(option);
+            }
+            
+            await updateCurrentAccountInfo();
+        }
+
+        // 切换账户
+        async function switchAccount() {
+            const selector = document.getElementById('accountSelector');
+            const newIndex = parseInt(selector.value);
+            
+            if (newIndex !== currentAccountIndex) {
+                log(`🔄 正在切换账户...`, 'info');
+                
+                // 清理旧的事件监听器
+                if (contract) {
+                    contract.removeAllListeners();
+                }
+                
+                currentAccountIndex = newIndex;
+                signer = provider.getSigner(currentAccountIndex);
+                contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+                
+                // 更新账户信息
+                await updateCurrentAccountInfo();
+                
+                // 刷新合约状态
+                await refreshStatus();
+                
+                // 重新设置事件监听
+                setupEventListeners();
+                
+                const currentAccount = accounts[currentAccountIndex];
+                const isOwner = contractOwners.includes(currentAccount);
+                log(`✅ 已切换到账户 ${currentAccount.slice(0, 10)}... ${isOwner ? '(👑 所有者)' : '(👤 普通账户)'}`, 'success');
+            }
+        }
+
+        // 更新当前账户信息
+        async function updateCurrentAccountInfo() {
+            try {
+                const currentAccount = accounts[currentAccountIndex];
+                const balance = await provider.getBalance(currentAccount);
+                const balanceEth = ethers.utils.formatEther(balance);
+                const isOwner = contractOwners.includes(currentAccount);
+                
+                const info = document.getElementById('currentAccountInfo');
+                info.innerHTML = `
+                    余额: ${balanceEth.slice(0, 8)} ETH | 
+                    角色: ${isOwner ? '<span style="color: #ffd700;">👑 合约所有者</span>' : '<span style="color: #ccc;">👤 普通账户</span>'}
+                `;
+                
+                // 更新按钮状态
+                const buttons = document.querySelectorAll('.btn');
+                buttons.forEach(btn => {
+                    if (!isOwner && (btn.textContent.includes('确认') || btn.textContent.includes('执行') || btn.textContent.includes('撤销') || btn.textContent.includes('暂停'))) {
+                        btn.style.opacity = '0.5';
+                        btn.title = '只有合约所有者才能执行此操作';
+                    } else {
+                        btn.style.opacity = '1';
+                        btn.title = '';
+                    }
+                });
+                
+            } catch (error) {
+                console.error('更新账户信息失败:', error);
+            }
+        }
+
+        // 页面加载时初始化
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
