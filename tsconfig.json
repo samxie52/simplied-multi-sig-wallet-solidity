@@ -12,15 +12,13 @@
     "resolveJsonModule": true,
     "declaration": true,
     "declarationMap": true,
-    "sourceMap": true,
-    "typeRoots": ["./node_modules/@types", "./typechain-types"]
+    "sourceMap": true
   },
   "include": [
-    "./scripts/**/*",
-    "./test/**/*",
-    "./tasks/**/*",
-    "./deploy/**/*",
-    "./typechain-types/**/*"
+    "./scripts",
+    "./test",
+    "./tasks",
+    "./typechain-types"
   ],
   "exclude": [
     "node_modules",
