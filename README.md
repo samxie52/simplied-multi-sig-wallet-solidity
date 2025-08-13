@@ -77,9 +77,9 @@ python3 -m http.server 8081
 #### 🔗 GitHub Pages Demo | GitHub Pages演示
 **Live testnet demo available at:**  
 **实时测试网演示可访问：**
-- **Testnet Demo**: `https://YOUR_USERNAME.github.io/YOUR_REPO/docs/interactive-test.html`
-- **Local Demo**: `https://YOUR_USERNAME.github.io/YOUR_REPO/docs/interactive-demo.html`
-- **Offline Demo**: `https://YOUR_USERNAME.github.io/YOUR_REPO/docs/offline-demo.html`
+- **Testnet Demo**: `https://samxie52.github.io/simplied-multi-sig-wallet-solidity/interactive-test.html`
+- **Local Demo**: `https://samxie52.github.io/simplied-multi-sig-wallet-solidity/interactive-demo.html`
+- **Offline Demo**: `https://samxie52.github.io/simplied-multi-sig-wallet-solidity/offline-demo.html`
 
 ### 🌟 Demo Features | 演示功能
 
