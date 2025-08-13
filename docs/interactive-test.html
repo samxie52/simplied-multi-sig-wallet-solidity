@@ -276,7 +276,7 @@
         const SEPOLIA_CONFIG = {
             chainId: 11155111,
             name: 'Sepolia',
-            rpcUrl: 'https://sepolia.infura.io/v3/YOUR_PROJECT_ID',
+            rpcUrl: 'https://ethereum-sepolia-rpc.publicnode.com',
             blockExplorer: 'https://sepolia.etherscan.io'
         };
 
@@ -317,28 +317,41 @@
         async function connectContract() {
             try {
                 const addressInput = document.getElementById('contractAddressInput').value;
-                if (!addressInput) {
+                
+                // 使用输入的地址或默认地址
+                if (addressInput) {
+                    CONTRACT_ADDRESS = addressInput;
+                } else if (!CONTRACT_ADDRESS) {
                     log('❌ 请输入合约地址', 'error');
                     return;
                 }
 
-                CONTRACT_ADDRESS = addressInput;
-                
-                if (typeof window.ethereum === 'undefined') {
-                    throw new Error('请安装MetaMask钱包');
+                // 优先使用MetaMask，如果没有则使用只读模式
+                if (typeof window.ethereum !== 'undefined') {
+                    try {
+                        provider = new ethers.providers.Web3Provider(window.ethereum);
+                        await window.ethereum.request({ method: 'eth_requestAccounts' });
+                        
+                        const network = await provider.getNetwork();
+                        if (network.chainId !== SEPOLIA_CONFIG.chainId) {
+                            log('⚠️ 当前不在Sepolia网络，切换到只读模式', 'warning');
+                            // 切换到只读模式
+                            provider = new ethers.providers.JsonRpcProvider(SEPOLIA_CONFIG.rpcUrl);
+                            contract = new ethers.Contract(CONTRACT_ADDRESS, MULTISIG_ABI, provider);
+                        } else {
+                            signer = provider.getSigner();
+                            contract = new ethers.Contract(CONTRACT_ADDRESS, MULTISIG_ABI, signer);
+                        }
+                    } catch (walletError) {
+                        log('⚠️ MetaMask连接失败，使用只读模式', 'warning');
+                        provider = new ethers.providers.JsonRpcProvider(SEPOLIA_CONFIG.rpcUrl);
+                        contract = new ethers.Contract(CONTRACT_ADDRESS, MULTISIG_ABI, provider);
+                    }
+                } else {
+                    log('ℹ️ 未检测到MetaMask，使用只读模式', 'info');
+                    provider = new ethers.providers.JsonRpcProvider(SEPOLIA_CONFIG.rpcUrl);
+                    contract = new ethers.Contract(CONTRACT_ADDRESS, MULTISIG_ABI, provider);
                 }
-
-                provider = new ethers.providers.Web3Provider(window.ethereum);
-                await window.ethereum.request({ method: 'eth_requestAccounts' });
-                
-                const network = await provider.getNetwork();
-                if (network.chainId !== SEPOLIA_CONFIG.chainId) {
-                    log('⚠️ 当前不在Sepolia网络', 'warning');
-                    return;
-                }
-
-                signer = provider.getSigner();
-                contract = new ethers.Contract(CONTRACT_ADDRESS, MULTISIG_ABI, signer);
 
                 document.getElementById('contractAddress').textContent = CONTRACT_ADDRESS.substring(0, 10) + '...';
                 document.getElementById('networkStatus').textContent = '已连接';
@@ -372,6 +385,11 @@
                     return;
                 }
 
+                if (!signer) {
+                    log('❌ 当前为只读模式，无法提交交易。请连接MetaMask钱包进行交易操作。', 'error');
+                    return;
+                }
+
                 const recipient = document.getElementById('recipientAddress').value;
                 const amount = document.getElementById('ethAmount').value;
 
@@ -380,7 +398,7 @@
                     return;
                 }
 
-                const value = ethers.utils.parseEther(amount);
+                const value = ethers.parseEther(amount);
                 const tx = await contract.submitTransaction(recipient, value, "0x");
                 
                 log(`⏳ 提交交易中... 哈希: ${tx.hash}`, 'info');
@@ -399,6 +417,11 @@
             try {
                 if (!contract) {
                     log('❌ 请先连接合约', 'error');
+                    return;
+                }
+
+                if (!signer) {
+                    log('❌ 当前为只读模式，无法确认交易。请连接MetaMask钱包进行交易操作。', 'error');
                     return;
                 }
 
@@ -428,6 +451,11 @@
                     return;
                 }
 
+                if (!signer) {
+                    log('❌ 当前为只读模式，无法执行交易。请连接MetaMask钱包进行交易操作。', 'error');
+                    return;
+                }
+
                 const txId = document.getElementById('transactionId').value;
                 if (!txId) {
                     log('❌ 请输入交易ID', 'error');
@@ -451,6 +479,11 @@
             try {
                 if (!contract) {
                     log('❌ 请先连接合约', 'error');
+                    return;
+                }
+
+                if (!signer) {
+                    log('❌ 当前为只读模式，无法撤销确认。请连接MetaMask钱包进行交易操作。', 'error');
                     return;
                 }
 
@@ -536,7 +569,16 @@
 
         // 页面加载完成后初始化
         window.addEventListener('load', function() {
-            log('🚀 页面加载完成，请连接合约开始测试', 'info');
+            log('🚀 页面加载完成', 'info');
+            
+            // 如果已有合约地址，自动连接
+            if (CONTRACT_ADDRESS) {
+                document.getElementById('contractAddressInput').value = CONTRACT_ADDRESS;
+                log('ℹ️ 检测到预设合约地址，自动连接中...', 'info');
+                connectContract();
+            } else {
+                log('ℹ️ 请输入合约地址并点击连接合约', 'info');
+            }
         });
     </script>
 </body>
