@@ -94,6 +94,40 @@ contract MockTarget {
     }
 
     /**
+     * @dev Complex function for testing
+     */
+    function complexFunction(
+        uint256[] memory numbers,
+        string memory text,
+        bool flag
+    ) external {
+        if (numbers.length > 0) {
+            value = numbers[0];
+        }
+        caller = msg.sender;
+        emit FunctionCalled("complexFunction", msg.sender, abi.encode(numbers, text, flag));
+    }
+
+    /**
+     * @dev Function that always fails for testing
+     */
+    function failingFunction() external pure {
+        revert("This function always fails");
+    }
+
+    /**
+     * @dev Gas griefing function for testing
+     */
+    function gasGriefing() external {
+        // Consume a lot of gas
+        for (uint256 i = 0; i < 10000; i++) {
+            value = i;
+        }
+        caller = msg.sender;
+        emit FunctionCalled("gasGriefing", msg.sender, "");
+    }
+
+    /**
      * @dev Receive function to accept Ether
      */
     receive() external payable {

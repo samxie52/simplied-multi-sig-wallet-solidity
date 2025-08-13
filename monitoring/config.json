@@ -1,0 +1,26 @@
+{
+  "contractAddress": "0x0000000000000000000000000000000000000000",
+  "network": "mainnet",
+  "alertThresholds": {
+    "largeTransactionValue": "10.0",
+    "maxDailyTransactions": 50,
+    "suspiciousGasUsage": 1000000
+  },
+  "notifications": {
+    "email": "admin@multisig-wallet.com",
+    "webhook": "https://hooks.slack.com/services/YOUR/WEBHOOK/URL",
+    "discord": "https://discord.com/api/webhooks/YOUR/WEBHOOK/URL"
+  },
+  "monitoring": {
+    "healthCheckInterval": 300000,
+    "reportInterval": 3600000,
+    "retryAttempts": 3,
+    "timeout": 30000
+  },
+  "logging": {
+    "level": "info",
+    "enableFileLogging": true,
+    "maxLogFiles": 30,
+    "enableConsoleLogging": true
+  }
+}

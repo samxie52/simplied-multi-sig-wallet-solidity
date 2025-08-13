@@ -1,0 +1,19 @@
+{
+  "owners": [
+    "0x0000000000000000000000000000000000000001",
+    "0x0000000000000000000000000000000000000002",
+    "0x0000000000000000000000000000000000000003"
+  ],
+  "requiredConfirmations": 2,
+  "network": "mainnet",
+  "gasPrice": "30",
+  "gasLimit": 3500000,
+  "verifyContract": true,
+  "description": "Production deployment configuration for Ethereum Mainnet",
+  "notes": [
+    "Replace owner addresses with actual production addresses",
+    "Ensure all owners have secure key management",
+    "Verify gas price before deployment",
+    "Test on testnet first"
+  ]
+}
