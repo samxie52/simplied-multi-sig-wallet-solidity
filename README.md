@@ -40,6 +40,7 @@ Choose your preferred language for detailed documentation:
 **Experience the full functionality with our live interactive demo!**  
 **通过我们的实时交互演示体验完整功能！**
 
+#### 🏠 Local Demo | 本地演示
 ```bash
 # 1. Start Hardhat local node | 启动Hardhat本地节点
 npx hardhat node
@@ -56,6 +57,30 @@ python3 -m http.server 8081
 # 访问: http://localhost:8081/interactive-demo.html
 ```
 
+#### 🌐 Testnet Demo | 测试网演示
+```bash
+# 1. Generate test accounts | 生成测试账户
+npx hardhat run scripts/generate-accounts.js
+
+# 2. Deploy to Sepolia testnet | 部署到Sepolia测试网
+npx hardhat run scripts/deploy-testnet.js --network sepolia
+
+# 3. Start demo server | 启动演示服务器
+cd docs
+python3 -m http.server 8081
+
+# 4. Open testnet demo | 打开测试网演示
+# Visit: http://localhost:8081/interactive-test.html
+# 访问: http://localhost:8081/interactive-test.html
+```
+
+#### 🔗 GitHub Pages Demo | GitHub Pages演示
+**Live testnet demo available at:**  
+**实时测试网演示可访问：**
+- **Testnet Demo**: `https://YOUR_USERNAME.github.io/YOUR_REPO/docs/interactive-test.html`
+- **Local Demo**: `https://YOUR_USERNAME.github.io/YOUR_REPO/docs/interactive-demo.html`
+- **Offline Demo**: `https://YOUR_USERNAME.github.io/YOUR_REPO/docs/offline-demo.html`
+
 ### 🌟 Demo Features | 演示功能
 
 - **👤 Multi-Account Switching** | **多账户切换**
@@ -64,6 +89,41 @@ python3 -m http.server 8081
 - **⚡ Batch Operations** | **批量操作**
 - **🛡️ Security Features** | **安全功能**
 - **📊 Real-time Status** | **实时状态**
+
+## 🌐 Testnet Deployment | 测试网部署
+
+### 📋 Complete Testnet Guide | 完整测试网指南
+
+For detailed testnet deployment instructions, see: **[TESTNET-DEPLOYMENT.md](docs/TESTNET-DEPLOYMENT.md)**  
+详细的测试网部署说明，请查看：**[TESTNET-DEPLOYMENT.md](docs/TESTNET-DEPLOYMENT.md)**
+
+### 🔑 Quick Testnet Setup | 快速测试网设置
+
+1. **Generate Test Accounts | 生成测试账户**
+   ```bash
+   npx hardhat run scripts/generate-accounts.js
+   # Creates 10 accounts: 5 owners + 5 users
+   # 创建10个账户：5个所有者 + 5个用户
+   ```
+
+2. **Get Test ETH | 获取测试ETH**
+   - Visit [Sepolia Faucet](https://sepoliafaucet.com/) for each owner account
+   - 为每个所有者账户访问 [Sepolia水龙头](https://sepoliafaucet.com/)
+   - Minimum 0.5 ETH per owner account recommended
+   - 建议每个所有者账户至少0.5 ETH
+
+3. **Deploy to Sepolia | 部署到Sepolia**
+   ```bash
+   npx hardhat run scripts/deploy-testnet.js --network sepolia
+   # Deploys with 5 owners, requires 3 confirmations
+   # 部署5个所有者，需要3个确认
+   ```
+
+4. **Test with Live Demo | 使用实时演示测试**
+   - Update contract address in `interactive-test.html`
+   - 在 `interactive-test.html` 中更新合约地址
+   - Access via GitHub Pages or local server
+   - 通过GitHub Pages或本地服务器访问
 
 ### 📖 Demo Usage Guide | 演示使用指南
 

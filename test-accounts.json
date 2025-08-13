@@ -1,0 +1,69 @@
+{
+  "network": "sepolia",
+  "generated": "2025-08-13T10:50:59.803Z",
+  "accounts": [
+    {
+      "index": 0,
+      "address": "0x364aB842806cDf35080c204bEAD8eeb0b531eCe2",
+      "privateKey": "0x52a74ac782906a20a3ec7e0914c31656c99874f453d56c7a6bd844086033d6c2",
+      "mnemonic": "panel october close winner judge transfer together country nut film time advance",
+      "role": "Owner"
+    },
+    {
+      "index": 1,
+      "address": "0x0627d13B1cBD6Be1664869be115909D7BEb76E2d",
+      "privateKey": "0x3600014a136dba82b429be3e7824d954a46ac141f1b645ab86debc488f26296f",
+      "mnemonic": "artwork private switch ride prevent good peace galaxy chuckle category will success",
+      "role": "Owner"
+    },
+    {
+      "index": 2,
+      "address": "0x8f1072a387984c8Af865f49d792854a16172D3a5",
+      "privateKey": "0x1d0499e331e6e011953373fa702c3dfce0f748514559cd3c6c3a7038b6d53168",
+      "mnemonic": "quote gauge badge next make scan electric acoustic tortoise comic tackle dumb",
+      "role": "Owner"
+    },
+    {
+      "index": 3,
+      "address": "0xdCF753C16126f59648110d0220A09f247DfcE47c",
+      "privateKey": "0x3389710cccd62f5a86d590fdf59055b5e5b1ff11cc5465c8256747f9be9d8db2",
+      "mnemonic": "dinosaur regular void phone corn family buddy primary catch follow kingdom run",
+      "role": "Owner"
+    },
+    {
+      "index": 4,
+      "address": "0x56bE7dF304547D8063Cf933c79Fe59E329E5839d",
+      "privateKey": "0xb4ca0c8a7dfdc85be97d90ce6ae583eb8c560b88b2475e583a8b3b7a5709c8a2",
+      "mnemonic": "cake bitter report crunch page give empower pledge august magnet include discover",
+      "role": "Owner"
+    },
+    {
+      "index": 5,
+      "address": "0x9F3f390a8Bbd1e0d5C36fE4df96cca1a0f7c986A",
+      "privateKey": "0x7fb506b134696885c79b37883b84c4b906d4d42e688f2db31bec8367ebde4830",
+      "mnemonic": "husband pool camera conduct thought cigar snake expire broken donkey kitten hard",
+      "role": "User"
+    },
+    {
+      "index": 6,
+      "address": "0xD0965F0347F4CAeDb40F0F8dD307CE3A4DEAe187",
+      "privateKey": "0xa49e4f107bd2abe4722c64d165c417458372e7b39c3e4393ef20def391c382c8",
+      "mnemonic": "hurdle spirit broccoli address cute gain pen upon blouse network amateur weasel",
+      "role": "User"
+    },
+    {
+      "index": 7,
+      "address": "0x8594cf17c9BAE1dbB4A0ADdf8A1541511dEc703E",
+      "privateKey": "0x06cdd7022d2d12b34b253ec5ac1267e717c4ed5c5f99814fd49a642327dcc4f0",
+      "mnemonic": "palm depart broken remind world thought cruise immense copper palm eye three",
+      "role": "User"
+    },
+    {
+      "index": 8,
+      "address": "0xa9C10d2796994626B0117574a15A96Cd5ee00114",
+      "privateKey": "0xb55e349507e194d3fc853793cc14c94a33af16fb3f24b49b68eeda83916a039e",
+      "mnemonic": "time nominee legend banana style remove injury rude honey goat pet dismiss",
+      "role": "User"
+    }
+  ]
+}

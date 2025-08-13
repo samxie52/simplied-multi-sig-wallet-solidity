@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MultiSig Wallet - Sepolia测试网交互</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2196F3 0%, #21CBF3 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            padding: 40px 0;
+        }
+        .header h1 {
+            font-size: 3.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .subtitle {
+            font-size: 1.2em;
+            background: rgba(255,255,255,0.2);
+            padding: 10px 20px;
+            border-radius: 25px;
+            display: inline-block;
+        }
+        .warning-banner {
+            background: rgba(255, 152, 0, 0.1);
+            border: 2px solid #FF9800;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            color: white;
+            text-align: center;
+        }
+        .network-info {
+            background: rgba(255,255,255,0.15);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+            color: white;
+        }
+        .network-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .network-item {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+        }
+        .status-bar {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+            color: white;
+        }
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .status-item { text-align: center; }
+        .status-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            display: block;
+        }
+        .demo-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        .demo-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .demo-section h2 {
+            color: #333;
+            margin-bottom: 25px;
+            font-size: 1.8em;
+            border-bottom: 3px solid #2196F3;
+            padding-bottom: 10px;
+        }
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        .btn {
+            background: linear-gradient(135deg, #2196F3, #21CBF3);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.4);
+        }
+        .btn-secondary {
+            background: linear-gradient(135deg, #FF9800, #FF5722);
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, #F44336, #E91E63);
+        }
+        .log-section {
+            grid-column: 1 / -1;
+            background: #1a1a1a;
+            color: #00ff00;
+            border-radius: 15px;
+            padding: 30px;
+            font-family: 'Courier New', monospace;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        .log-entry.info { background: rgba(0, 255, 0, 0.1); }
+        .log-entry.warning { background: rgba(255, 165, 0, 0.1); color: #FFA500; }
+        .log-entry.error { background: rgba(255, 0, 0, 0.1); color: #ff0000; }
+        .log-entry.success { background: rgba(0, 255, 0, 0.1); color: #00ff00; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌐 MultiSig Wallet</h1>
+            <div class="subtitle">Sepolia测试网实时交互演示</div>
+        </div>
+
+        <div class="warning-banner">
+            <strong>⚠️ 测试网环境</strong><br>
+            本页面连接到Sepolia测试网，使用的是测试ETH，没有实际价值。
+        </div>
+
+        <div class="network-info">
+            <h3>🔗 Sepolia测试网信息</h3>
+            <div class="network-details">
+                <div class="network-item">
+                    <strong>网络名称:</strong> Sepolia<br>
+                    <strong>链ID:</strong> 11155111
+                </div>
+                <div class="network-item">
+                    <strong>区块浏览器:</strong><br>
+                    <a href="https://sepolia.etherscan.io/" target="_blank" style="color: #FFE082;">sepolia.etherscan.io</a>
+                </div>
+                <div class="network-item">
+                    <strong>测试ETH水龙头:</strong><br>
+                    <a href="https://sepoliafaucet.com/" target="_blank" style="color: #FFE082;">sepoliafaucet.com</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-grid">
+                <div class="status-item">
+                    <span class="status-value" id="contractAddress">未连接</span>
+                    <span class="status-label">合约地址</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-value" id="ownerCount">-</span>
+                    <span class="status-label">所有者数量</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-value" id="requiredConfirmations">-</span>
+                    <span class="status-label">所需确认数</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-value" id="contractBalance">-</span>
+                    <span class="status-label">合约余额 (ETH)</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-value" id="transactionCount">-</span>
+                    <span class="status-label">交易总数</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-value" id="networkStatus">离线</span>
+                    <span class="status-label">网络状态</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-grid">
+            <div class="demo-section">
+                <h2>🔧 合约连接</h2>
+                <div class="form-group">
+                    <label for="contractAddressInput">合约地址:</label>
+                    <input type="text" id="contractAddressInput" placeholder="0x..." />
+                </div>
+                <button class="btn" onclick="connectContract()">连接合约</button>
+                <button class="btn btn-secondary" onclick="switchToSepolia()">切换到Sepolia</button>
+            </div>
+
+            <div class="demo-section">
+                <h2>📝 提交交易</h2>
+                <div class="form-group">
+                    <label for="recipientAddress">接收地址:</label>
+                    <input type="text" id="recipientAddress" placeholder="0x..." />
+                </div>
+                <div class="form-group">
+                    <label for="ethAmount">ETH数量:</label>
+                    <input type="number" id="ethAmount" step="0.001" placeholder="0.01" />
+                </div>
+                <button class="btn" onclick="submitTransaction()">提交交易</button>
+            </div>
+
+            <div class="demo-section">
+                <h2>✅ 交易管理</h2>
+                <div class="form-group">
+                    <label for="transactionId">交易ID:</label>
+                    <input type="number" id="transactionId" placeholder="0" />
+                </div>
+                <button class="btn" onclick="confirmTransaction()">确认交易</button>
+                <button class="btn btn-secondary" onclick="executeTransaction()">执行交易</button>
+                <button class="btn btn-danger" onclick="revokeConfirmation()">撤销确认</button>
+            </div>
+
+            <div class="demo-section">
+                <h2>🔍 查询功能</h2>
+                <button class="btn" onclick="refreshStatus()">刷新状态</button>
+                <button class="btn btn-secondary" onclick="loadTransactions()">加载交易</button>
+                <button class="btn btn-secondary" onclick="checkOwnerStatus()">检查Owner状态</button>
+            </div>
+
+            <div class="log-section">
+                <h2>📋 操作日志</h2>
+                <div id="logContainer">
+                    <div class="log-entry info">
+                        <strong>[系统]</strong> 欢迎使用MultiSig Wallet Sepolia测试网交互演示！
+                    </div>
+                    <div class="log-entry warning">
+                        <strong>[提醒]</strong> 请先部署合约并输入合约地址
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 测试网配置
+        const SEPOLIA_CONFIG = {
+            chainId: 11155111,
+            name: 'Sepolia',
+            rpcUrl: 'https://sepolia.infura.io/v3/YOUR_PROJECT_ID',
+            blockExplorer: 'https://sepolia.etherscan.io'
+        };
+
+        // 合约ABI
+        const MULTISIG_ABI = [
+            "function submitTransaction(address _to, uint256 _value, bytes memory _data) public returns (uint256)",
+            "function confirmTransaction(uint256 _transactionId) public",
+            "function executeTransaction(uint256 _transactionId) public",
+            "function revokeConfirmation(uint256 _transactionId) public",
+            "function getOwnerCount() public view returns (uint256)",
+            "function getTransactionCount() public view returns (uint256)",
+            "function getTransaction(uint256 _transactionId) public view returns (address, uint256, bytes memory, bool, uint256)",
+            "function isOwner(address _address) public view returns (bool)",
+            "function required() public view returns (uint256)",
+            "event TransactionSubmitted(uint256 indexed transactionId, address indexed to, uint256 value, bytes data, address indexed submitter)",
+            "event TransactionConfirmed(uint256 indexed transactionId, address indexed owner)",
+            "event TransactionExecuted(uint256 indexed transactionId)"
+        ];
+
+        // 全局变量
+        let provider;
+        let signer;
+        let contract;
+        let CONTRACT_ADDRESS = "0x5f8708de92E019FB4337083b0991D621505ef334";
+
+        // 日志函数
+        function log(message, type = 'info') {
+            const logContainer = document.getElementById('logContainer');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${type}`;
+            logEntry.innerHTML = `<strong>[${timestamp}]</strong> ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        // 连接合约
+        async function connectContract() {
+            try {
+                const addressInput = document.getElementById('contractAddressInput').value;
+                if (!addressInput) {
+                    log('❌ 请输入合约地址', 'error');
+                    return;
+                }
+
+                CONTRACT_ADDRESS = addressInput;
+                
+                if (typeof window.ethereum === 'undefined') {
+                    throw new Error('请安装MetaMask钱包');
+                }
+
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                await window.ethereum.request({ method: 'eth_requestAccounts' });
+                
+                const network = await provider.getNetwork();
+                if (network.chainId !== SEPOLIA_CONFIG.chainId) {
+                    log('⚠️ 当前不在Sepolia网络', 'warning');
+                    return;
+                }
+
+                signer = provider.getSigner();
+                contract = new ethers.Contract(CONTRACT_ADDRESS, MULTISIG_ABI, signer);
+
+                document.getElementById('contractAddress').textContent = CONTRACT_ADDRESS.substring(0, 10) + '...';
+                document.getElementById('networkStatus').textContent = '已连接';
+                
+                await refreshStatus();
+                log('✅ 合约连接成功', 'success');
+
+            } catch (error) {
+                log(`❌ 连接失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 切换到Sepolia网络
+        async function switchToSepolia() {
+            try {
+                await window.ethereum.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: `0x${SEPOLIA_CONFIG.chainId.toString(16)}` }],
+                });
+                log('✅ 已切换到Sepolia网络', 'success');
+            } catch (error) {
+                log(`❌ 切换网络失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 提交交易
+        async function submitTransaction() {
+            try {
+                if (!contract) {
+                    log('❌ 请先连接合约', 'error');
+                    return;
+                }
+
+                const recipient = document.getElementById('recipientAddress').value;
+                const amount = document.getElementById('ethAmount').value;
+
+                if (!recipient || !amount) {
+                    log('❌ 请填写接收地址和金额', 'error');
+                    return;
+                }
+
+                const value = ethers.utils.parseEther(amount);
+                const tx = await contract.submitTransaction(recipient, value, "0x");
+                
+                log(`⏳ 提交交易中... 哈希: ${tx.hash}`, 'info');
+                const receipt = await tx.wait();
+                
+                log('✅ 交易提交成功', 'success');
+                await refreshStatus();
+
+            } catch (error) {
+                log(`❌ 提交交易失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 确认交易
+        async function confirmTransaction() {
+            try {
+                if (!contract) {
+                    log('❌ 请先连接合约', 'error');
+                    return;
+                }
+
+                const txId = document.getElementById('transactionId').value;
+                if (!txId) {
+                    log('❌ 请输入交易ID', 'error');
+                    return;
+                }
+
+                const tx = await contract.confirmTransaction(txId);
+                log(`⏳ 确认交易中... 哈希: ${tx.hash}`, 'info');
+                await tx.wait();
+                
+                log('✅ 交易确认成功', 'success');
+                await refreshStatus();
+
+            } catch (error) {
+                log(`❌ 确认交易失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 执行交易
+        async function executeTransaction() {
+            try {
+                if (!contract) {
+                    log('❌ 请先连接合约', 'error');
+                    return;
+                }
+
+                const txId = document.getElementById('transactionId').value;
+                if (!txId) {
+                    log('❌ 请输入交易ID', 'error');
+                    return;
+                }
+
+                const tx = await contract.executeTransaction(txId);
+                log(`⏳ 执行交易中... 哈希: ${tx.hash}`, 'info');
+                await tx.wait();
+                
+                log('✅ 交易执行成功', 'success');
+                await refreshStatus();
+
+            } catch (error) {
+                log(`❌ 执行交易失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 撤销确认
+        async function revokeConfirmation() {
+            try {
+                if (!contract) {
+                    log('❌ 请先连接合约', 'error');
+                    return;
+                }
+
+                const txId = document.getElementById('transactionId').value;
+                if (!txId) {
+                    log('❌ 请输入交易ID', 'error');
+                    return;
+                }
+
+                const tx = await contract.revokeConfirmation(txId);
+                log(`⏳ 撤销确认中... 哈希: ${tx.hash}`, 'info');
+                await tx.wait();
+                
+                log('✅ 撤销确认成功', 'success');
+                await refreshStatus();
+
+            } catch (error) {
+                log(`❌ 撤销确认失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 刷新状态
+        async function refreshStatus() {
+            try {
+                if (!contract) return;
+
+                const ownerCount = await contract.getOwnerCount();
+                const required = await contract.required();
+                const txCount = await contract.getTransactionCount();
+                const balance = await provider.getBalance(CONTRACT_ADDRESS);
+
+                document.getElementById('ownerCount').textContent = ownerCount.toString();
+                document.getElementById('requiredConfirmations').textContent = required.toString();
+                document.getElementById('transactionCount').textContent = txCount.toString();
+                document.getElementById('contractBalance').textContent = ethers.utils.formatEther(balance);
+
+                log('✅ 状态更新完成', 'info');
+
+            } catch (error) {
+                log(`❌ 刷新状态失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 检查Owner状态
+        async function checkOwnerStatus() {
+            try {
+                if (!contract) {
+                    log('❌ 请先连接合约', 'error');
+                    return;
+                }
+
+                const address = await signer.getAddress();
+                const isOwner = await contract.isOwner(address);
+                
+                log(`👤 当前账户: ${address}`, 'info');
+                log(`🏛️ 是否为Owner: ${isOwner ? '是' : '否'}`, isOwner ? 'success' : 'warning');
+
+            } catch (error) {
+                log(`❌ 检查Owner状态失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 加载交易列表
+        async function loadTransactions() {
+            try {
+                if (!contract) {
+                    log('❌ 请先连接合约', 'error');
+                    return;
+                }
+
+                const txCount = await contract.getTransactionCount();
+                log(`📋 总交易数: ${txCount}`, 'info');
+
+                for (let i = 0; i < Math.min(txCount, 5); i++) {
+                    const tx = await contract.getTransaction(i);
+                    log(`交易 ${i}: 目标=${tx[0]}, 金额=${ethers.utils.formatEther(tx[1])} ETH, 已执行=${tx[3]}`, 'info');
+                }
+
+            } catch (error) {
+                log(`❌ 加载交易失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 页面加载完成后初始化
+        window.addEventListener('load', function() {
+            log('🚀 页面加载完成，请连接合约开始测试', 'info');
+        });
+    </script>
+</body>
+</html>

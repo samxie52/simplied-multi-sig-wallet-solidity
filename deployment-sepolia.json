@@ -1,0 +1,16 @@
+{
+  "network": "sepolia",
+  "contractAddress": "0x5f8708de92E019FB4337083b0991D621505ef334",
+  "deploymentTx": "0x3e96540cc179a3d1d2783634a93609bf78b3c5d507bc7872f1b7eafa9fb37be3",
+  "deployer": "0x23bC3334F9C31B23E84696649cbB2123dcBA6aC5",
+  "owners": [
+    "0x364aB842806cDf35080c204bEAD8eeb0b531eCe2",
+    "0x0627d13B1cBD6Be1664869be115909D7BEb76E2d",
+    "0x8f1072a387984c8Af865f49d792854a16172D3a5",
+    "0xdCF753C16126f59648110d0220A09f247DfcE47c",
+    "0x56bE7dF304547D8063Cf933c79Fe59E329E5839d"
+  ],
+  "requiredConfirmations": 3,
+  "deployedAt": "2025-08-13T13:11:37.949Z",
+  "gasUsed": "2957832"
+}
